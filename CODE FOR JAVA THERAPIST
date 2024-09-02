@@ -1,0 +1,238 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class JavaTherapistApp {
+    private static JFrame frame;
+    private static JPanel cardPanel;
+    private static CardLayout cardLayout;
+    private static String[] questions;
+    private static int currentQuestion;
+    private static int totalScore;
+    private static JTextField nameField;
+    private static JTextField ageField;
+    private static JRadioButton maleRadio;
+    private static JRadioButton femaleRadio;
+    private static double percentage;
+
+    public static void main(String[] args) {
+        frame = new JFrame("Java Therapist");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.setLayout(new BorderLayout());
+
+        cardPanel = new JPanel();
+        cardLayout = new CardLayout();
+        cardPanel.setLayout(cardLayout);
+
+        JPanel personalInfoPanel = createPersonalInfoPanel();
+        cardPanel.add(personalInfoPanel, "personalInfo");
+
+        questions = new String[]{
+                "How are you feeling today?",
+                "On a scale of 1-10, how stressed are you?",
+                "How well are you sleeping?",
+                "How would you rate your energy levels today?",
+                "How often do you play games?",
+                "Do you often experience mood swings?",
+                "Are you experiencing any anxiety or panic attacks?",
+                "Do you have trouble concentrating or making decisions?",
+                "How would you describe your eating habits (Fast Food/Healthy Food)?"
+        };
+
+        for (int i = 0; i < questions.length; i++) {
+            JPanel questionPanel = createQuestionPanel(i);
+            cardPanel.add(questionPanel, "question" + i);
+        }
+
+        totalScore = 0;
+        currentQuestion = 0;
+
+        frame.add(cardPanel, BorderLayout.CENTER);
+
+        showPanel("personalInfo");
+
+        frame.setVisible(true);
+    }
+
+    private static JPanel createPersonalInfoPanel() {
+        JPanel panel = new JPanel(new GridLayout(5, 2));
+        JLabel nameLabel = new JLabel("Name:");
+        nameField = new JTextField();
+        JLabel ageLabel = new JLabel("Age:");
+        ageField = new JTextField();
+        JLabel sexLabel = new JLabel("Select your gender:");
+        maleRadio = new JRadioButton("Male");
+        femaleRadio = new JRadioButton("Female");
+        ButtonGroup sexGroup = new ButtonGroup();
+        sexGroup.add(maleRadio);
+        sexGroup.add(femaleRadio);
+
+        JButton nextButton = new JButton("LOGIN");
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (validatePersonalInfo()) {
+                    showNextQuestion();
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Please fill in all personal information.", "Incomplete Information", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+        Font labelFont = nameLabel.getFont();
+        nameLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+        ageLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+        sexLabel.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+        maleRadio.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+        femaleRadio.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+        nameField.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+        ageField.setFont(new Font(labelFont.getName(), Font.PLAIN, 20));
+
+        panel.add(nameLabel);
+        panel.add(nameField);
+        panel.add(ageLabel);
+        panel.add(ageField);
+        panel.add(sexLabel);
+        panel.add(maleRadio);
+        panel.add(new JLabel());
+        panel.add(femaleRadio);
+        panel.add(new JLabel());
+        panel.add(nextButton);
+
+        return panel;
+    }
+
+    private static JPanel createQuestionPanel(int questionIndex) {
+        JPanel panel = new JPanel(new GridLayout(5, 1));
+        JLabel questionLabel = new JLabel(questions[questionIndex]);
+        questionLabel.setFont(new Font(questionLabel.getFont().getName(), Font.PLAIN, 24));
+        panel.add(questionLabel);
+
+        if (questionIndex == 0) {
+            JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+            slider.setMajorTickSpacing(25);
+            slider.setMinorTickSpacing(5);
+            slider.setPaintTicks(true);
+            slider.setPaintLabels(true);
+            panel.add(slider);
+        } else if (questionIndex == 1 || questionIndex == 2 || questionIndex == 3) {
+            SpinnerModel spinnerModel = new SpinnerNumberModel(5, 1, 10, 1);
+            JSpinner spinner = new JSpinner(spinnerModel);
+            panel.add(spinner);
+        } else if (questionIndex == 4) {
+            String[] playGamesOptions = {"Rarely", "Often", "Regularly"};
+            JComboBox<String> playGamesComboBox = new JComboBox<>(playGamesOptions);
+            panel.add(playGamesComboBox);
+        } else if (questionIndex == 8) {
+            String[] eatingHabitsOptions = {"Fast Food", "Healthy Food"};
+            JComboBox<String> eatingHabitsComboBox = new JComboBox<>(eatingHabitsOptions);
+            panel.add(eatingHabitsComboBox);
+        } else {
+            JRadioButton yesButton = new JRadioButton("Yes");
+            JRadioButton noButton = new JRadioButton("No");
+            ButtonGroup buttonGroup = new ButtonGroup();
+            buttonGroup.add(yesButton);
+            buttonGroup.add(noButton);
+            panel.add(yesButton);
+            panel.add(noButton);
+        }
+
+        JButton nextButton = new JButton("Next");
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                processAnswer(questionIndex, e);
+            }
+        });
+        panel.add(nextButton);
+
+        return panel;
+    }
+
+    private static void showNextQuestion() {
+        if (currentQuestion < questions.length) {
+            showPanel("question" + currentQuestion);
+        } else {
+            calculatePercentage();
+        }
+    }
+
+    private static void processAnswer(int questionIndex, ActionEvent e) {
+        if (questionIndex == 0) {
+            JSlider slider = (JSlider) ((Component) e.getSource()).getParent().getComponent(1);
+            totalScore += slider.getValue();
+        } else if (questionIndex == 1 || questionIndex == 2 || questionIndex == 3) {
+            JSpinner spinner = (JSpinner) ((Component) e.getSource()).getParent().getComponent(1);
+            totalScore += (int) spinner.getValue();
+        } else if (questionIndex == 4 || questionIndex == 8) {
+            JComboBox<String> comboBox = (JComboBox<String>) ((Component) e.getSource()).getParent().getComponent(1);
+            if (comboBox.getSelectedItem().equals("Often")) {
+                totalScore += 10;
+            } else if (comboBox.getSelectedItem().equals("Regularly")) {
+                totalScore += 15;
+            }
+        } else {
+            JRadioButton yesButton = (JRadioButton) ((Component) e.getSource()).getParent().getComponent(1);
+            if (yesButton.isSelected()) {
+                totalScore += 10;
+            }
+        }
+
+        currentQuestion++;
+        showNextQuestion();
+    }
+
+    private static void calculatePercentage() {
+        percentage = (totalScore / (questions.length * 10.0)) * 100;
+
+        if (percentage < 50) {
+            showSuggestions();
+        } else {
+            showResult();
+        }
+    }
+
+    private static void showSuggestions() {
+        JLabel detailsLabel = new JLabel("Name: " + nameField.getText() + " | Age: " + ageField.getText() + " | Gender: " + (maleRadio.isSelected() ? "Male" : "Female") + " | Mental health score: " + String.format("%.2f", percentage) + "%");
+        detailsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        detailsLabel.setForeground(Color.BLUE);
+
+        JLabel suggestionsLabel = new JLabel("<html>Suggestions to improve mental health:<br>" +
+                "1. Regular exercise and physical activity.<br>" +
+                "2. Balanced and healthy eating habits.<br>" +
+                "3. Seeking support from friends and family.<br>" +
+                "4. Consult a healthcare professional or therapist.<br>" +
+                "Recommended doctors:<br>" +
+                "1. Dr. Madhukar - Psychiatrist | Phone: 2105A42016<br>" +
+                "2. Dr. Mujeeb - Psychiatrist | Phone: 2105A42021<br>" +
+                "3. Dr. Navaneeth - Psychologist | Phone: 2105A42022</html>");
+        suggestionsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        suggestionsLabel.setForeground(Color.RED);
+
+        frame.remove(cardPanel);
+        frame.setLayout(new BorderLayout());
+        frame.add(detailsLabel, BorderLayout.NORTH);
+        frame.add(suggestionsLabel, BorderLayout.CENTER);
+        frame.revalidate();
+    }
+
+    private static void showResult() {
+        JLabel resultLabel = new JLabel("Name: " + nameField.getText() + " | Age: " + ageField.getText() + " | Gender: " + (maleRadio.isSelected() ? "Male" : "Female") + " | Mental health score: " + String.format("%.2f", percentage) + "%");
+        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        resultLabel.setForeground(Color.BLUE);
+
+        frame.remove(cardPanel);
+        frame.add(resultLabel, BorderLayout.CENTER);
+        frame.revalidate();
+    }
+
+    private static void showPanel(String panelName) {
+        cardLayout.show(cardPanel, panelName);
+    }
+
+    private static boolean validatePersonalInfo() {
+        return !nameField.getText().isEmpty() && !ageField.getText().isEmpty() && (maleRadio.isSelected() || femaleRadio.isSelected());
+    }
+}
